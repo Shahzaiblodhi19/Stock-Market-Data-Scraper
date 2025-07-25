@@ -23,6 +23,15 @@ A simple Node.js API that scrapes real-time stock data from **Yahoo Finance** (C
 
 ---
 
+## 📡 API Endpoint
+- 🔗 Visit: http://localhost:3000/api/stocks
+
+- This endpoint returns all the stock data in a structured JSON format.
+
+- 🔄 Reload the URL every 15–20 seconds to see real-time updated values such as CMP, Present Value, Gain/Loss, and Portfolio %.
+
+---
+
 ## 🚀 Installation & Run
 
 ```bash
