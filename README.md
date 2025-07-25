@@ -26,7 +26,7 @@ A simple Node.js API that scrapes real-time stock data from **Yahoo Finance** (C
 ## 🚀 Installation & Run
 
 ```bash
-git clone https://github.com/yourusername/Stock-Market-Data-Scraper.git
+git clone https://github.com/Shahzaiblodhi19/Stock-Market-Data-Scraper.git
 cd Stock-Market-Data-Scraper
 npm install
 node index.js
