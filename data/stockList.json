@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Apple Inc.",
+    "ticker": "AAPL",
+    "purchasePrice": 180,
+    "quantity": 10,
+    "exchange": "NASDAQ"
+  },
+  {
+    "name": "Google LLC",
+    "ticker": "GOOG",
+    "purchasePrice": 120,
+    "quantity": 8,
+    "exchange": "NASDAQ"
+  },
+  {
+    "name": "Amazon.com Inc.",
+    "ticker": "AMZN",
+    "purchasePrice": 130,
+    "quantity": 12,
+    "exchange": "NASDAQ"
+  },
+  {
+    "name": "Microsoft Corp.",
+    "ticker": "MSFT",
+    "purchasePrice": 280,
+    "quantity": 5,
+    "exchange": "NASDAQ"
+  },
+  {
+    "name": "Tesla Inc.",
+    "ticker": "TSLA",
+    "purchasePrice": 250,
+    "quantity": 6,
+    "exchange": "NASDAQ"
+  }
+]
