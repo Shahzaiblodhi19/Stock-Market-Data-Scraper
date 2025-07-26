@@ -96,17 +96,18 @@ async function yahooScraper(ticker) {
     await page.bringToFront();
     await page.evaluate(() => window.focus());
 
-    // Wait for CMP selector to be hydrated
-    await page.waitForSelector('fin-streamer[data-field="regularMarketPrice"]', {
+    // Wait for the new selector to appear
+    await page.waitForSelector('span.yf-ipw1h0.base[data-testid="qsp-price"]', {
       timeout: 15000,
     });
 
     // Small wait to ensure DOM is stable
     await wait(1000);
 
+    // Extract CMP
     const cmp = await page.$eval(
-      'fin-streamer[data-field="regularMarketPrice"]',
-      el => parseFloat(el.textContent.replace(/,/g, ""))
+      'span.yf-ipw1h0.base[data-testid="qsp-price"]',
+      (el) => parseFloat(el.textContent.replace(/,/g, ""))
     );
 
     if (isNaN(cmp)) throw new Error("Parsed CMP is NaN");
