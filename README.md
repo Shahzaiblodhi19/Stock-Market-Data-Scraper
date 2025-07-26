@@ -24,7 +24,7 @@ A simple Node.js API that scrapes real-time stock data from **Yahoo Finance** (C
 ---
 
 ## 📡 API Endpoint
-- 🔗 Visit: http://localhost:3000/api/stocks
+- 🔗 Visit: http://localhost:3000/getStocksData
 
 - This endpoint returns all the stock data in a structured JSON format.
 
