@@ -1,33 +1,21 @@
 import express from "express";
 import cors from "cors";
 import pLimit from "p-limit";
+import fs from "fs/promises";
 
-import googleScraper from "./scrapers/googleScraper.js";
 import yahooScraper from "./scrapers/yahooScraper.js";
-import fs from 'fs/promises';
-
-const data = await fs.readFile('./data/stockList.json', 'utf-8');
-const stockList = JSON.parse(data);
-
-
+import googleScraper from "./scrapers/googleScraper.js";
 
 const app = express();
 const PORT = 3000;
 
-let cachedData = stockList.map(stock => ({
-  ...stock,
-  investment: stock.purchasePrice * stock.quantity,
-  cmp: null,
-  presentValue: null,
-  gainLoss: null,
-  peRatio: null,
-  latestEarnings: null,
-  portfolioPercent: null,
-}));
+const data = await fs.readFile("./data/stockList.json", "utf-8");
+const stockList = JSON.parse(data);
 
-let lastUpdated = null;
-const limit = pLimit(3); // concurrent scraping limit
+// Utility: Limit concurrent scrapes
+const limit = pLimit(3);
 
+// Utility: Promise timeout wrapper
 const withTimeout = (promise, ms) =>
   Promise.race([
     promise,
@@ -36,51 +24,59 @@ const withTimeout = (promise, ms) =>
     ),
   ]);
 
+let cachedData = [];
+let lastUpdated = null;
+
+// Core scraper + calculator
 async function fetchStockData(stock, totalInvestment) {
+  const investment = stock.purchasePrice * stock.quantity;
+
+  let cmp = null;
+  let presentValue = null;
+  let gainLoss = null;
+  let peRatio = null;
+  let latestEarnings = null;
+
+  // Fetch CMP
   try {
     const yahooRaw = await withTimeout(yahooScraper(stock.ticker), 45000);
-
-    // In case yahooScraper returns array
     const yahooData = Array.isArray(yahooRaw) ? yahooRaw[0] : yahooRaw;
 
-    if (!yahooData || typeof yahooData.cmp !== "number") {
-      throw new Error("Invalid CMP from Yahoo scraper");
+    if (yahooData && typeof yahooData.cmp === "number") {
+      cmp = yahooData.cmp;
+      presentValue = cmp * stock.quantity;
+      gainLoss = presentValue - investment;
+    } else {
+      console.warn(`⚠️ CMP not found for ${stock.ticker}`);
     }
-
-    const googleData = await withTimeout(googleScraper(stock.ticker), 45000);
-
-    const investment = stock.purchasePrice * stock.quantity;
-    const cmp = yahooData.cmp;
-    const presentValue = cmp * stock.quantity;
-    const gainLoss = presentValue - investment;
-    const portfolioPercent = (investment / totalInvestment) * 100;
-
-    return {
-      ...stock,
-      investment,
-      cmp,
-      presentValue,
-      gainLoss,
-      peRatio: googleData?.peRatio ?? null,
-      latestEarnings: googleData?.latestEarnings ?? null,
-      portfolioPercent: portfolioPercent.toFixed(2),
-    };
   } catch (err) {
-    console.error(`❌ Error fetching CMP for ${stock.ticker}:`, err.message);
-
-    return {
-      ...stock,
-      investment: stock.purchasePrice * stock.quantity,
-      cmp: null,
-      presentValue: null,
-      gainLoss: null,
-      peRatio: null,
-      latestEarnings: null,
-      portfolioPercent: null,
-    };
+    console.warn(`❌ Yahoo scraper failed for ${stock.ticker}: ${err.message}`);
   }
+
+  // Fetch P/E and earnings
+  try {
+    const googleData = await withTimeout(googleScraper(stock.ticker), 45000);
+    peRatio = googleData?.peRatio ?? null;
+    latestEarnings = googleData?.latestEarnings ?? null;
+  } catch (err) {
+    console.warn(`❌ Google scraper failed for ${stock.ticker}: ${err.message}`);
+  }
+
+  const portfolioPercent = (investment / totalInvestment) * 100;
+
+  return {
+    ...stock,
+    investment,
+    cmp,
+    presentValue: cmp !== null ? presentValue : null,
+    gainLoss: cmp !== null ? gainLoss : null,
+    peRatio,
+    latestEarnings,
+    portfolioPercent: portfolioPercent.toFixed(2),
+  };
 }
 
+// Main update logic
 async function calculateData() {
   try {
     console.log("🔁 Updating stock data...");
@@ -98,17 +94,20 @@ async function calculateData() {
     lastUpdated = new Date();
 
     console.log("✅ Data updated at:", lastUpdated.toLocaleTimeString());
-  } catch (error) {
-    console.error("❌ Critical error during data update:", error.message);
+  } catch (err) {
+    console.error("❌ Critical error during data update:", err.message);
   }
 }
 
+// Initial + scheduled updates
+await calculateData();
 setInterval(calculateData, 15000);
-calculateData();
 
+// Enable CORS
 app.use(cors());
 
-app.get("/api/stocks", (req, res) => {
+// API Route
+app.get("/getstocksData", (req, res) => {
   res.json({
     lastUpdated,
     count: cachedData.length,
@@ -116,6 +115,7 @@ app.get("/api/stocks", (req, res) => {
   });
 });
 
+// Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });

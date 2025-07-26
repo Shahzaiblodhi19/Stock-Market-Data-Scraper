@@ -1,59 +1,65 @@
-import puppeteer  from "puppeteer-core";
+import puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
 
-const CHROME_PATH = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
-const DEBUGGING_URL = "http://localhost:9222";
+puppeteer.use(StealthPlugin());
+
 const MAX_CONCURRENT_TABS = 3;
 
 let browserInstance = null;
 let browserLaunchingPromise = null;
 let tabPool = [];
 
-const connectOrLaunchBrowser = async () => {
+async function launchBrowser() {
   if (browserInstance) return browserInstance;
   if (browserLaunchingPromise) return browserLaunchingPromise;
 
   browserLaunchingPromise = (async () => {
-    try {
-      const browser = await puppeteer.connect({
-        browserURL: DEBUGGING_URL,
-        defaultViewport: null,
-      });
-      console.log("Connected to existing Chrome instance to run Google Scraper");
-      browserInstance = browser;
-    } catch {
-      console.warn("No running Chrome detected, launching a new one...");
-      const browser = await puppeteer.launch({
-        headless: false,
-        executablePath: CHROME_PATH,
-        args: ["--remote-debugging-port=9222"],
-        defaultViewport: null,
-      });
-      console.log("Launched new Chrome instance");
-      browserInstance = browser;
-    }
-    return browserInstance;
+    const browser = await puppeteer.launch({
+      headless: 'new',
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-background-timer-throttling",
+        "--disable-backgrounding-occluded-windows",
+        "--disable-renderer-backgrounding",
+      ],
+      defaultViewport: null,
+    });
+    console.log("✅ Launched bundled Chromium in headless mode");
+    browserInstance = browser;
+    return browser;
   })();
 
   const result = await browserLaunchingPromise;
   browserLaunchingPromise = null;
   return result;
-};
+}
 
-const initTabPool = async () => {
-  const browser = await connectOrLaunchBrowser();
+/**
+ * Initializes a pool of tabs
+ */
+async function initTabPool() {
+  const browser = await launchBrowser();
   while (tabPool.length < MAX_CONCURRENT_TABS) {
     const page = await browser.newPage();
+    await page.setUserAgent(
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+    );
+    await page.setExtraHTTPHeaders({
+      "Accept-Language": "en-US,en;q=0.9",
+    });
     tabPool.push(page);
   }
-};
+}
 
-const getTab = () => {
+function getTab() {
   return tabPool.shift();
-};
+}
 
-const releaseTab = (tab) => {
+function releaseTab(tab) {
   tabPool.push(tab);
-};
+}
 
 const googleScraper = async (ticker) => {
   if (tabPool.length === 0) await initTabPool();
@@ -66,7 +72,7 @@ const googleScraper = async (ticker) => {
       timeout: 15000,
     });
 
-    await page.waitForSelector("tr.roXhBd, .gyFHrc", { timeout: 7000 });
+    await page.waitForSelector("tr.roXhBd, .gyFHrc", { timeout: 10000 });
 
     const data = await page.evaluate(() => {
       let peRatio = null;
