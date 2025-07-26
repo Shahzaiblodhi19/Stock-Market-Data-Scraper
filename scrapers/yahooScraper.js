@@ -1,6 +1,6 @@
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import { setTimeout as wait } from "timers/promises"; // fix for waitForTimeout
+import { setTimeout as wait } from "timers/promises";
 
 puppeteer.use(StealthPlugin());
 
@@ -86,16 +86,23 @@ async function yahooScraper(ticker) {
 
   try {
     const url = `https://finance.yahoo.com/quote/${ticker}`;
+    await page.goto("about:blank"); // reset tab
     await page.goto(url, {
       waitUntil: "domcontentloaded",
       timeout: 15000,
     });
 
+    // 🧠 Force foreground rendering
+    await page.bringToFront();
+    await page.evaluate(() => window.focus());
+
+    // Wait for CMP selector to be hydrated
     await page.waitForSelector('fin-streamer[data-field="regularMarketPrice"]', {
       timeout: 15000,
     });
 
-    await wait(1500); // replaces waitForTimeout
+    // Small wait to ensure DOM is stable
+    await wait(1000);
 
     const cmp = await page.$eval(
       'fin-streamer[data-field="regularMarketPrice"]',

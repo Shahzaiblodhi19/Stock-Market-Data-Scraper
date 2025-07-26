@@ -39,7 +39,7 @@ async function fetchStockData(stock, totalInvestment) {
 
   // Fetch CMP
   try {
-    const yahooRaw = await withTimeout(yahooScraper(stock.ticker), 45000);
+    const yahooRaw = await withTimeout(yahooScraper(stock.ticker), 15000);
     const yahooData = Array.isArray(yahooRaw) ? yahooRaw[0] : yahooRaw;
 
     if (yahooData && typeof yahooData.cmp === "number") {
@@ -55,7 +55,7 @@ async function fetchStockData(stock, totalInvestment) {
 
   // Fetch P/E and earnings
   try {
-    const googleData = await withTimeout(googleScraper(stock.ticker), 45000);
+    const googleData = await withTimeout(googleScraper(stock.ticker), 15000);
     peRatio = googleData?.peRatio ?? null;
     latestEarnings = googleData?.latestEarnings ?? null;
   } catch (err) {
