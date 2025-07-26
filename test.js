@@ -1,5 +1,5 @@
-const yahooScraper = require("./scrapers/yahooScraper");
-const googleScraper = require("./scrapers/googleScraper");
+import yahooScraper from "./scrapers/yahooScraper.js";
+import googleScraper from "./scrapers/googleScraper.js";
 
 (async () => {
   const result = await yahooScraper("AAPL");

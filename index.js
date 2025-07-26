@@ -1,10 +1,15 @@
-const express = require("express");
-const cors = require("cors");
-const pLimit = require("p-limit").default;
+import express from "express";
+import cors from "cors";
+import pLimit from "p-limit";
 
-const googleScraper = require("./scrapers/googleScraper");
-const yahooScraper = require("./scrapers/yahooScraper");
-const stockList = require("./data/stockList.json");
+import googleScraper from "./scrapers/googleScraper.js";
+import yahooScraper from "./scrapers/yahooScraper.js";
+import fs from 'fs/promises';
+
+const data = await fs.readFile('./data/stockList.json', 'utf-8');
+const stockList = JSON.parse(data);
+
+
 
 const app = express();
 const PORT = 3000;

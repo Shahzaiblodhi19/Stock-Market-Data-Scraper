@@ -1,4 +1,4 @@
-const puppeteer = require("puppeteer-core");
+import puppeteer  from "puppeteer-core";
 
 const CHROME_PATH = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
 const DEBUGGING_URL = "http://localhost:9222";
@@ -108,4 +108,4 @@ const googleScraper = async (ticker) => {
   }
 };
 
-module.exports = googleScraper;
+export default googleScraper;
